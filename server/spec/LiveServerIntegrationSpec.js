@@ -11,6 +11,7 @@ describe('server', function() {
 
   it('should send back parsable stringified JSON', function(done) {
     request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+      console.log('body in test:', body);
       expect(JSON.parse.bind(this, body)).to.not.throw();
       done();
     });
@@ -40,8 +41,9 @@ describe('server', function() {
         username: 'Jono',
         message: 'Do my bidding!'}
     };
-
+    
     request(requestParams, function(error, response, body) {
+      console.log('status in test:', response.statusCode);
       expect(response.statusCode).to.equal(201);
       done();
     });

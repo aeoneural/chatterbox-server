@@ -11,12 +11,15 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
-
+var data = {};
+data.results = [];
+  
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'content-type, accept',
-  'access-control-max-age': 10 // Seconds.
+  'access-control-max-age': 10, // Seconds.
+  'Content-Type': 'text/plain' //'text/plain'
 };
 
 var qs = require('querystring');
@@ -37,12 +40,7 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   
-  var data = {};
-  data.results = [];
-  data.results.push({ayush: 'hello'}, {aygerim: 'world'});
-  
-  
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  //console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   // The outgoing status.
   var statusCode = 200;
@@ -54,50 +52,47 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'application/JSON';
+  // headers['Content-Type'] = 'application/JSON';
   
   
-  // if (request.url === 'favicon.ico') { 
-  //   console.log('THis is url');
-  // }
-  if (request.method === 'GET') { 
-    console.log("This is a get request.");
-    if (request.url === '/favicon.ico') { 
-      response.writeHead(404, headers);
-      response.end();
-    } else if ( request.url === '/classes/messages') { 
-      response.writeHead(200, headers);
-      response.write(JSON.stringify(data));
-      response.end();
-    } else {
-      response.writeHead(statusCode, headers);
-      response.write(JSON.stringify(data));
-      response.end();
-    }
-    
+  if (request.url !== '/classes/messages') { 
+    response.writeHead(404, headers);
+    response.end();
+  } else if (request.method === 'GET') {    
+    // console.log("DATA IN GET REQ", JSON.parse(JSON.stringify(data)));
+    // console.log(typeof JSON.parse(JSON.stringify(data)));
+    response.writeHead(statusCode, headers);
+    // console.log('typeof data before END:', typeof data);
+    // console.log('data before END: ', data);
+    //console.log("CHecking data: ", JSON.parse(JSON.stringify(data)));
+    response.end(JSON.stringify(data));
+    // var temp = JSON.stringify(data);
+    // console.log('typeof data after END:', typeof temp === 'string');
+    // console.log('data after END:', data);
+  
   } else if (request.method === 'POST') {
-    console.log('HELLO URL', request.url);
-    if ( request.url === '/classes/messages') { 
-      var body = ''; 
-      request.on('data', function(chunk) { 
-        body += chunk;
-      });
-      request.on('end', function() { 
-        var formData = qs.parse(body); 
-        data.results.push(formData);
-        response.writeHead(201, headers);
-        response.end();
-      
-      });
-      console.log('This is the body: ' + body); 
-      console.log('This is the data: ' + data);
-    }
-    
+    //console.log('HELLO URL Hello', request.url);
+   
+    var body = []; 
+    request.on('data', function(chunk) { 
+      console.log('chunk type:', typeof chunk);
+      // console.log('chunk', chunk);
+      body.push(chunk);
+    }).on('end', function() { 
+      // console.log('body:', body);
+      // console.log('body type:', typeof body);
+      body = Buffer.concat(body).toString(); 
+      console.log('body type after concat to string:', typeof body);
+      data.results.push(JSON.parse(body));
+      console.log('data after array stuff:', data);
+      console.log('data.results:', data.results);
+      //statusCode = 201;
+      response.writeHead(201, headers);
+      response.end(JSON.stringify(data));
+    });
   } else if (request.method === 'OPTIONS') { 
-    console.log("Logging options.");
     response.writeHead(statusCode, defaultCorsHeaders);
-    response.end('This is an option');
-  
+    response.end(); 
   }
 
   // .writeHead() writes to the request line and headers of the response,
@@ -123,6 +118,5 @@ var requestHandler = function(request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-
 
 module.exports.requestHandler = requestHandler;
